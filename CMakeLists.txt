@@ -10,7 +10,7 @@ find_package(catkin REQUIRED COMPONENTS
 )
 
 ## Find Orocos RTT and plugins
-find_package(OROCOS-RTT 2.0.0 COMPONENTS rtt-scripting rtt-marshalling rtt-transport-mqueue rtt-transport-corba)
+find_package(OROCOS-RTT 2.0.0 COMPONENTS rtt-scripting rtt-marshalling rtt-transport-corba)
 if (NOT OROCOS-RTT_FOUND)
   message(FATAL_ERROR "\n   RTT not found. Is the version correct? Use the CMAKE_PREFIX_PATH cmake or environment variable to point to the installation directory of RTT.")
 else()
@@ -69,16 +69,6 @@ if(TARGET ${PROJECT_NAME}_generate_messages_cpp)
   )
 
 ## Build options
-# mqueue transport
-OPTION(ENABLE_MQ "Build posix message queue transport plugin for ${_package}" OFF)
-if(ENABLE_MQ)
-  if (OROCOS-RTT_MQUEUE_FOUND)
-    message(STATUS "Building MQueue transport plugin for ROS messages in package ${_package} with ${OROCOS-RTT_MQUEUE_LIBRARIES}")
-  else()
-    message(WARNING "Disabled built of posix message queue transport plugin for ${_package} because the RTT mqueue plugin could not be found.")
-    set(ENABLE_MQ OFF CACHE BOOL "Build posix message queue transport plugin for ${_package} (forced to OFF)" FORCE)
-  endif()
-endif()
 
 if(NOT DEFINED CMAKE_BUILD_TYPE OR CMAKE_BUILD_TYPE STREQUAL "Release")
   set(CMAKE_BUILD_TYPE MinSizeRel)
@@ -91,7 +81,7 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
 )
 
-# Build typekit plugin
+# Build ROS transport plugin
 orocos_typekit(rtt-rt_string_msgs-ros-transport
   src/ros_rt_string_msgs_transport.cpp
 )
@@ -106,28 +96,6 @@ target_link_libraries(rtt-rt_string_msgs-ros-transport ${catkin_LIBRARIES})
   add_dependencies(${PROJECT_NAME}_rename_generated_header_files ${PROJECT_NAME}_generate_messages_cpp)
   add_dependencies(${PROJECT_NAME}_generate_messages ${PROJECT_NAME}_rename_generated_header_files)
 endif()
-
-# Build mqueue transport plugin
-if(ENABLE_MQ)
-  orocos_typekit(rtt-rt_string_msgs-ros-transport-mqueue
-    ${rtt-kdl_msgs-ros-transport-mqueue_SOURCES}
-  )
-  target_link_libraries(rtt-rt_string_msgs-ros-transport-mqueue ${catkin_LIBRARIES} ${OROCOS-RTT_MQUEUE_LIBRARIES})
-endif()
-
-# Add an explicit dependency between the typekits and message files
-# TODO: Add deps for all msg dependencies
-if(boost_date_time_msgs_EXPORTED_TARGETS)
-  if(NOT boost_date_time_msgs STREQUAL ${PROJECT_NAME})
-    add_dependencies(rtt-rt_string_msgs-ros-transport ${boost_date_time_msgs_EXPORTED_TARGETS})
-    if(TARGET rtt-rt_string_msgs-ros-transport-mqueue)
-      add_dependencies(rtt-rt_string_msgs-ros-transport-mqueue ${boost_date_time_msgs_EXPORTED_TARGETS})
-    endif()
-  endif()
-endif()
-
-## Language: Python
-# TODO
 
 #############
 ## Install ##
@@ -148,12 +116,12 @@ install(DIRECTORY include/${PROJECT_NAME}/boost
 
 ## Install headers
 install(
-  DIRECTORY include/orocos
+  DIRECTORY include/
   DESTINATION ${CATKIN_GLOBAL_INCLUDE_DESTINATION}
 )
 
 ## Generate Orocos package
 orocos_generate_package(
   DEPENDS rt_string_msgs
-  DEPENDS_TARGETS rtt_roscomm rtt_std_msgs
+  DEPENDS_TARGETS rtt_roscomm
 )
