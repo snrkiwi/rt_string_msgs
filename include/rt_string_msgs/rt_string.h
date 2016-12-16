@@ -109,15 +109,9 @@ namespace ros
 {
 namespace serialization
 {
-template<> struct Serializer< ::RTT::rt_string >
-{
-  template<typename Stream, typename T> inline static void allInOne(Stream& stream, T s)
-  {
-    stream.next(s);
-  }
-  
-  ROS_DECLARE_ALLINONE_SERIALIZER;
-};
+
+// use Serializer<T> specialization for std::basic_string<char, std::char_traits<char>, ContainerAllocator>
+// defined in ros/serialization.h
 
 } // namespace serialization
 } // namespace ros
@@ -132,9 +126,7 @@ struct Printer< ::RTT::rt_string >
 {
   template<typename Stream> static void stream(Stream& s, const std::string& indent, const ::RTT::rt_string& str)
   {
-    
-    s << indent << "data: ";
-    s << indent << str;
+    s << indent << str << std::endl;
   }
 };
 
